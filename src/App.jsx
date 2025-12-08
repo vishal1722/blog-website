@@ -1,17 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { Button } from './components/ui/button'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./Layout/Layout";
+import { RouteIndex } from "./helpers/RouteName";
+import Index from "./pages/Index";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-    <Button>Shadcn Ui</Button>
+      <BrowserRouter>
+        <Routes>
+          {/* Main Layout */}
+          <Route path={RouteIndex} element={<Layout />}>
+            {/* Child Route (Homepage) */}
+            <Route index element={<Index />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
