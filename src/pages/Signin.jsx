@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,14 +16,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { RouteSignup } from "@/helpers/RouteName";
+import { showToast } from "@/helpers/showToast";
 
-// 🔹 SIGN-IN VALIDATION
+/* 🔹 SIGN-IN VALIDATION */
 const SigninSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const Signin = () => {
+  const navigate = useNavigate(); // ✅ hook at top level
+
   const form = useForm({
     resolver: zodResolver(SigninSchema),
     defaultValues: {
@@ -32,12 +35,41 @@ const Signin = () => {
     },
   });
 
-  function onSubmit(values) {
-    console.log("Signin Success:", values);
-  }
+  const onSubmit = async (values) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: values.username, // backend expects email
+            password: values.password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast("error", data.message || "Signin failed");
+        return;
+      }
+
+      showToast("success", "Signin successful");
+
+      setTimeout(() => {
+        navigate("/");
+      }, 800);
+
+    } catch (error) {
+      console.error("Error during signin:", error);
+      showToast("error", "Something went wrong");
+    }
+  };
 
   return (
-    <div className="flex justify-center items-center h-screen w-screen bg-gray-100">
+    <div className="flex justify-center items-center h-screen bg-gray-100">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -49,22 +81,20 @@ const Signin = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-            {/* USERNAME */}
             <FormField
               control={form.control}
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter username" {...field} />
+                    <Input placeholder="Enter email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* PASSWORD */}
             <FormField
               control={form.control}
               name="password"
@@ -72,36 +102,25 @@ const Signin = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter password"
-                      {...field}
-                    />
+                    <Input type="password" placeholder="Enter password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* SUBMIT */}
             <Button type="submit" className="w-full">
               Sign In
             </Button>
           </form>
         </Form>
 
-        {/* SIGNUP REDIRECT */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-gray-600">
-            Don’t have an account?{" "}
-            <Link
-              to={RouteSignup}
-              className="text-blue-600 font-semibold hover:underline"
-            >
-              Sign Up
-            </Link>
-          </p>
-        </div>
+        <p className="text-center text-sm mt-6">
+          Don’t have an account?{" "}
+          <Link to={RouteSignup} className="text-blue-600 font-semibold hover:underline">
+            Sign Up
+          </Link>
+        </p>
       </motion.div>
     </div>
   );
