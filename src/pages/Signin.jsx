@@ -4,6 +4,13 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+
+import { setUser } from "@/redux/user/user.slice";
+import { showToast } from "@/helpers/showToast";
+import GoogleLogin from "@/components/GoogleLogin";
+import { RouteSignup, RouteIndex } from "@/helpers/RouteName";
+import { getEnv } from "@/helpers/getEnv";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,22 +22,21 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { RouteSignup } from "@/helpers/RouteName";
-import { showToast } from "@/helpers/showToast";
 
-/* 🔹 SIGN-IN VALIDATION */
+/* 🔹 Validation */
 const SigninSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const Signin = () => {
-  const navigate = useNavigate(); // ✅ hook at top level
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const form = useForm({
     resolver: zodResolver(SigninSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -38,32 +44,27 @@ const Signin = () => {
   const onSubmit = async (values) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+        `${getEnv("VITE_API_BASE_URL")}/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: values.username, // backend expects email
-            password: values.password,
-          }),
+          credentials: "include",
+          body: JSON.stringify(values),
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        showToast("error", data.message || "Signin failed");
-        return;
+        return showToast("error", data.message || "Signin failed");
       }
 
-      showToast("success", "Signin successful");
-
-      setTimeout(() => {
-        navigate("/");
-      }, 800);
+      dispatch(setUser(data.user));
+      showToast("success", data.message || "Signin successful");
+      navigate(RouteIndex);
 
     } catch (error) {
-      console.error("Error during signin:", error);
+      console.error(error);
       showToast("error", "Something went wrong");
     }
   };
@@ -73,17 +74,27 @@ const Signin = () => {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
         className="bg-white shadow-xl rounded-2xl p-10 w-96"
       >
         <h2 className="text-2xl font-bold text-center mb-6">Sign In</h2>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Google Login */}
+        <GoogleLogin
+          onSuccess={(user) => {
+            dispatch(setUser(user));
+            navigate(RouteIndex);
+          }}
+        />
 
+        {/* Form */}
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 mt-4"
+          >
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
@@ -102,22 +113,24 @@ const Signin = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Enter password" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="w-full">
-              Sign In
-            </Button>
+            <Button className="w-full">Sign In</Button>
           </form>
         </Form>
 
         <p className="text-center text-sm mt-6">
           Don’t have an account?{" "}
-          <Link to={RouteSignup} className="text-blue-600 font-semibold hover:underline">
+          <Link to={RouteSignup} className="text-blue-600 font-semibold">
             Sign Up
           </Link>
         </p>
