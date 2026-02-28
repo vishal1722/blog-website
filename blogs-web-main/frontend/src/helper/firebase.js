@@ -1,18 +1,25 @@
+// firebase.js
 
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_Firebase_API_KEY,
-  authDomain: "chetan-blogs-web-7266f.firebaseapp.com",
-  projectId: "chetan-blogs-web-7266f",
-  storageBucket: "chetan-blogs-web-7266f.firebasestorage.app",
-  messagingSenderId: "391282069396",
-  appId: "1:391282069396:web:4c1b39c9af842d11aa0981",
+  apiKey: "AIzaSyC2jxLBE_lZ6KFuP3-ee98M910XKrGCVKg",
+  authDomain: "mern-blog-9f268.firebaseapp.com",
+  projectId: "mern-blog-9f268",
+  storageBucket: "mern-blog-9f268.appspot.com",
+  messagingSenderId: "45434974038",
+  appId: "1:45434974038:web:f4bab6fecd2c6eef94f0f7",
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Firebase Auth
 const auth = getAuth(app);
+
+// Google Auth Provider
 const provider = new GoogleAuthProvider();
 
 export { auth, provider };
